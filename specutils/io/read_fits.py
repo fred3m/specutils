@@ -39,7 +39,8 @@ wcs_attributes_function_parameters = {'chebyshev': ['order', 'pmin', 'pmax'],
                                       'legendre': ['order', 'pmin', 'pmax'],
                                       'linearspline': ['npieces', 'pmin',
                                                        'pmax'],
-                                      'cubicspline': ['npieces', 'pmin', 'pmax']}
+                                      'cubicspline': ['npieces', 'pmin', 'pmax'],
+                                      'pixelcoordinatearray': ['order']}
 
 wcs_attributes_general_keywords = OrderedDict(
     [('aperture', int), ('beam', int), ('dispersion_type', int),
@@ -50,6 +51,8 @@ wcs_attributes_general_keywords = OrderedDict(
 wcs_attributes_function_keywords = OrderedDict(
     [('weight', float), ('zero_point_offset', float), ('type', int),
      ('order', int), ('pmin', float), ('pmax', float), ('npieces', int)])
+
+wcs_optional_attributes = ['aperture_low', 'aperture_high']
 
 
 def _get_num_coefficients(function_dict):
@@ -65,6 +68,8 @@ def _get_num_coefficients(function_dict):
         return function_dict["npieces"] + 1
     elif function_type == "cubicspline":
         return function_dict["npieces"] + 3
+    elif function_type== 'pixelcoordinatearray':
+        return function_dict['order']
     else:
         return 0
 
@@ -108,7 +113,10 @@ def _parse_multispec_dict(multispec_dict):
         single_spec_dict = OrderedDict()
         spec_string = multispec_dict[spec_key].strip().split()
         for key_name, key_dtype in wcs_attributes_general_keywords.items():
-            single_spec_dict[key_name] = key_dtype(spec_string.pop(0))
+            val = spec_string.pop(0)
+            if val=='INDEF' and key_name in wcs_optional_attributes:
+                val = 0
+            single_spec_dict[key_name] = key_dtype(val)
         single_spec_dict['functions'] = []
         while len(spec_string) > 0:
             # There seems to be a function defined for this spectrum -
